@@ -1,0 +1,13 @@
+node_modules
+**/node_modules
+dist
+**/dist
+.env
+.git
+.gitignore
+coverage
+backend/uploads/*
+!backend/uploads/.gitkeep
+npm-debug.log*
+Dockerfile*
+docker-compose*.yml
