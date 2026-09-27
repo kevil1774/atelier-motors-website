@@ -4,25 +4,20 @@ pipeline {
     options {
         timestamps()
         timeout(time: 30, unit: 'MINUTES')
-
         buildDiscarder(
             logRotator(
                 numToKeepStr: '10',
                 artifactNumToKeepStr: '10'
             )
         )
-
         disableConcurrentBuilds()
     }
 
     environment {
         APP_NAME = 'atelier-motors'
-
         BACKEND_IMAGE = 'atelier-motors-backend'
         FRONTEND_IMAGE = 'atelier-motors-frontend'
-
         DOCKERHUB_NAMESPACE = 'kevilpatel17'
-
         TEST_MONGODB_URI = 'mongodb://atelier-test-mongodb:27017/atelier-motors-test'
     }
 
@@ -77,13 +72,10 @@ pipeline {
                     sh """
                         echo "Application: ${APP_NAME}" \
                             > build-artifacts/build-info.txt
-
                         echo "Version: ${VERSION_TAG}" \
                             >> build-artifacts/build-info.txt
-
                         echo "Git SHA: ${GIT_SHA}" \
                             >> build-artifacts/build-info.txt
-
                         echo "Release Tag: ${RELEASE_TAG}" \
                             >> build-artifacts/build-info.txt
                     """
@@ -102,7 +94,6 @@ pipeline {
                     sh '''
                         rm -rf backend/test-results
                         rm -rf backend/coverage
-
                         mkdir -p backend/test-results
                     '''
 
@@ -383,12 +374,10 @@ pipeline {
                                 echo "Checking staging backend..."
 
                                 for i in $(seq 1 30); do
-
                                     if curl -fsS \
                                         http://atelier-staging-backend:5000/api/health \
                                         > /tmp/staging-health.json
                                     then
-
                                         echo "Backend response:"
                                         cat /tmp/staging-health.json
 
@@ -418,7 +407,6 @@ pipeline {
                                 echo "Checking staging frontend..."
 
                                 for i in $(seq 1 30); do
-
                                     if curl -fsS \
                                         http://atelier-staging-frontend:8080/health \
                                         >/dev/null 2>&1
@@ -438,7 +426,6 @@ pipeline {
                                 echo "Checking staging frontend on port 3001..."
 
                                 for i in $(seq 1 30); do
-
                                     if curl -fsS \
                                         http://host.docker.internal:3001/health \
                                         >/dev/null 2>&1
@@ -558,12 +545,10 @@ pipeline {
                                     echo "Checking rollback backend..."
 
                                     for i in $(seq 1 30); do
-
                                         if curl -fsS \
                                             http://atelier-staging-backend:5000/api/health \
                                             > /tmp/rollback-health.json
                                         then
-
                                             STATUS=$(jq -r '.status' /tmp/rollback-health.json)
 
                                             if [ "${STATUS}" = "ok" ]
@@ -584,7 +569,6 @@ pipeline {
                                     echo "Checking rollback frontend..."
 
                                     for i in $(seq 1 30); do
-
                                         if curl -fsS \
                                             http://atelier-staging-frontend:8080/health \
                                             >/dev/null 2>&1
@@ -634,7 +618,6 @@ pipeline {
                     echo "========================================"
                     echo "RELEASE"
                     echo "========================================"
-
                     echo "Docker Hub namespace: ${env.DOCKERHUB_NAMESPACE}"
                     echo "Version tag         : ${env.VERSION_TAG}"
                     echo "SHA tag             : ${env.SHA_TAG}"
@@ -734,27 +717,6 @@ pipeline {
                     echo ""
                     echo "Git tag: ${RELEASE_TAG}"
                     echo "========================================"
-                }
-            }
-        }
-
-        stage('PRODUCTION APPROVAL') {
-            steps {
-                timeout(
-                    time: 10,
-                    unit: 'MINUTES'
-                ) {
-                    input(
-                        message: "Promote Atelier Motors ${env.VERSION_TAG} to production?",
-                        ok: "Deploy to Production"
-                    )
-                }
-            }
-        }
-
-        stage('PRODUCTION') {
-            steps {
-                script {
 
                     echo "========================================"
                     echo "PRODUCTION DEPLOYMENT"
@@ -810,12 +772,10 @@ pipeline {
                                 echo "Waiting for production backend..."
 
                                 for i in $(seq 1 30); do
-
                                     if curl -fsS \
                                         http://atelier-production-backend:5000/api/health \
                                         > /tmp/production-health.json
                                     then
-
                                         echo "Production backend response:"
                                         cat /tmp/production-health.json
 
@@ -845,7 +805,6 @@ pipeline {
                                 echo "Checking production frontend..."
 
                                 for i in $(seq 1 30); do
-
                                     if curl -fsS \
                                         http://atelier-production-frontend:8080/health \
                                         >/dev/null 2>&1
@@ -865,7 +824,6 @@ pipeline {
                                 echo "Checking production frontend on port 3000..."
 
                                 for i in $(seq 1 30); do
-
                                     if curl -fsS \
                                         http://host.docker.internal:3000/health \
                                         >/dev/null 2>&1
@@ -905,7 +863,6 @@ pipeline {
 
             echo """
             Build ${env.BUILD_NUMBER} completed successfully.
-
             Version : ${env.VERSION_TAG}
             Git SHA : ${env.GIT_SHA}
             Release : ${env.RELEASE_TAG}
@@ -918,7 +875,6 @@ pipeline {
             echo "========================================"
             echo "PIPELINE FAILED"
             echo "========================================"
-
             echo "Check the failed stage in Jenkins."
         }
 
