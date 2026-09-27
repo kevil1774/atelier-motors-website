@@ -131,7 +131,7 @@
       },
       "targets": [
         {
-          "expr": "100 * sum by (environment) (rate(atelier_http_requests_total{status_code=~\"4..|5..\"}[5m])) / clamp_min(sum by (environment) (rate(atelier_http_requests_total[5m])), 0.001)",
+          "expr": "100 * (sum by (environment) (rate(atelier_http_requests_total{status_code=~\"4..|5..\"}[5m])) or (sum by (environment) (rate(atelier_http_requests_total[5m])) * 0)) / clamp_min(sum by (environment) (rate(atelier_http_requests_total[5m])), 0.001)",
           "legendFormat": "{{environment}}",
           "refId": "A"
         }
@@ -282,5 +282,5 @@
   "timezone": "browser",
   "title": "Atelier Motors Monitoring",
   "uid": "atelier-motors-monitoring",
-  "version": 1
+  "version": 2
 }
