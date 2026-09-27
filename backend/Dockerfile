@@ -14,11 +14,23 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
+RUN apk update && \
+    apk upgrade --no-cache && \
+    rm -rf /var/cache/apk/*
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY backend/package*.json ./backend/
 COPY backend/ ./
 
-RUN addgroup -S appgroup && \
+RUN rm -rf \
+        /usr/local/lib/node_modules/npm \
+        /usr/local/lib/node_modules/corepack \
+        /opt/yarn-v1.22.22 \
+        /usr/local/bin/npm \
+        /usr/local/bin/npx \
+        /usr/local/bin/corepack \
+    && \
+    addgroup -S appgroup && \
     adduser -S appuser -G appgroup && \
     mkdir -p /app/uploads && \
     chown -R appuser:appgroup /app
