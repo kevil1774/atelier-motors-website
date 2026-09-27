@@ -1,0 +1,49 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: atelier-staging-mongodb
+    restart: unless-stopped
+    networks:
+      - ci-network
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval \"db.adminCommand('ping').ok\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: ${BACKEND_IMAGE}:${IMAGE_TAG}
+    container_name: atelier-staging-backend
+    restart: unless-stopped
+    ports:
+      - "5001:5000"
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      APP_VERSION: ${APP_VERSION}
+      MONGODB_URI: mongodb://mongodb:27017/atelier-motors
+      JWT_SECRET: ${STAGING_JWT_SECRET}
+      UPLOAD_DIR: /app/uploads
+      CLIENT_URL: http://localhost:3001
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - ci-network
+
+  frontend:
+    image: ${FRONTEND_IMAGE}:${IMAGE_TAG}
+    container_name: atelier-staging-frontend
+    restart: unless-stopped
+    ports:
+      - "3001:8080"
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - ci-network
+
+networks:
+  ci-network:
+    external: true
+    name: atelier-ci-network

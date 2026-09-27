@@ -8,17 +8,87 @@ import morgan from 'morgan';
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
+
 import api from './src/routes.js';
-const dirname=path.dirname(fileURLToPath(import.meta.url));
-const app=express();
-app.use(helmet({crossOriginResourcePolicy:{policy:'cross-origin'}}));
-app.use(cors({origin:process.env.CLIENT_URL||'http://localhost:5173'}));
-app.use(express.json({limit:'1mb'})); app.use(mongoSanitize()); app.use(morgan('dev'));
-app.use('/api',rateLimit({windowMs:15*60*1000,limit:300,standardHeaders:true,legacyHeaders:false}));
-const uploadDir=path.resolve(process.env.UPLOAD_DIR||path.join(dirname,'uploads')); fs.mkdirSync(uploadDir,{recursive:true});
-app.use('/uploads',express.static(uploadDir));
-app.get('/api/health',(req,res)=>res.json({status:'ok'}));
-app.use('/api',api);
-app.use((req,res)=>res.status(404).json({message:'The requested resource was not found.'}));
-app.use((err,req,res,next)=>{console.error(err);const status=err.status||err.statusCode||(err.name==='ValidationError'||err.name==='CastError'?400:500);res.status(status).json({message:status>=500?'Something went wrong. Please try again.':err.message});});
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const app = express();
+
+app.use(
+    helmet({
+        crossOriginResourcePolicy: {
+            policy: 'cross-origin'
+        }
+    })
+);
+
+app.use(
+    cors({
+        origin: process.env.CLIENT_URL || 'http://localhost:5173'
+    })
+);
+
+app.use(express.json({ limit: '1mb' }));
+
+app.use(mongoSanitize());
+
+app.use(morgan('dev'));
+
+app.use(
+    '/api',
+    rateLimit({
+        windowMs: 15 * 60 * 1000,
+        limit: 300,
+        standardHeaders: true,
+        legacyHeaders: false
+    })
+);
+
+const uploadDir = path.resolve(
+    process.env.UPLOAD_DIR || path.join(dirname, 'uploads')
+);
+
+fs.mkdirSync(uploadDir, {
+    recursive: true
+});
+
+app.use('/uploads', express.static(uploadDir));
+
+app.get('/api/health', (req, res) => {
+    res.status(200).json({
+        status: 'ok',
+        version: process.env.APP_VERSION || '1.0.0'
+    });
+});
+
+app.use('/api', api);
+
+app.use((req, res) =>
+    res.status(404).json({
+        message: 'The requested resource was not found.'
+    })
+);
+
+app.use((err, req, res, next) => {
+    console.error(err);
+
+    const status =
+        err.status ||
+        err.statusCode ||
+        (
+            err.name === 'ValidationError' ||
+            err.name === 'CastError'
+                ? 400
+                : 500
+        );
+
+    res.status(status).json({
+        message:
+            status >= 500
+                ? 'Something went wrong. Please try again.'
+                : err.message
+    });
+});
+
 export default app;
