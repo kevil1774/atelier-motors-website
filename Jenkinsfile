@@ -852,6 +852,112 @@ pipeline {
                 }
             }
         }
+
+        stage('MONITORING') {
+            steps {
+                script {
+                    echo "========================================"
+                    echo "MONITORING VALIDATION"
+                    echo "========================================"
+
+                    echo "Checking Prometheus readiness..."
+
+                    sh '''
+                        curl -fsS \
+                            http://host.docker.internal:9090/-/ready \
+                            >/dev/null
+
+                        echo "Prometheus is ready."
+                    '''
+
+                    echo "Checking Prometheus targets..."
+
+                    sh '''
+                        curl -fsS \
+                            http://host.docker.internal:9090/api/v1/targets \
+                            > /tmp/prometheus-targets.json
+
+                        echo "Checking production backend target..."
+
+                        jq -e '
+                            any(
+                                .data.activeTargets[];
+                                .labels.job == "atelier-production-backend"
+                                and .health == "up"
+                            )
+                        ' /tmp/prometheus-targets.json >/dev/null
+
+                        echo "Production backend monitoring target is UP."
+
+                        echo "Checking staging backend target..."
+
+                        jq -e '
+                            any(
+                                .data.activeTargets[];
+                                .labels.job == "atelier-staging-backend"
+                                and .health == "up"
+                            )
+                        ' /tmp/prometheus-targets.json >/dev/null
+
+                        echo "Staging backend monitoring target is UP."
+                    '''
+
+                    echo "Checking Prometheus alert rules..."
+
+                    sh '''
+                        curl -fsS \
+                            http://host.docker.internal:9090/api/v1/rules \
+                            > /tmp/prometheus-rules.json
+
+                        for RULE in \
+                            AtelierProductionBackendDown \
+                            AtelierStagingBackendDown \
+                            AtelierHighErrorRate \
+                            AtelierHighRequestLatency
+                        do
+                            jq -e --arg RULE "$RULE" '
+                                any(
+                                    .data.groups[].rules[];
+                                    .name == $RULE
+                                )
+                            ' /tmp/prometheus-rules.json >/dev/null
+
+                            echo "Verified alert rule: ${RULE}"
+                        done
+
+                        echo "All 4 Prometheus alert rules are loaded."
+                    '''
+
+                    echo "Checking Grafana health..."
+
+                    sh '''
+                        curl -fsS \
+                            http://host.docker.internal:3002/api/health \
+                            > /tmp/grafana-health.json
+
+                        STATUS=$(jq -r '.database' /tmp/grafana-health.json)
+
+                        if [ "${STATUS}" = "ok" ]; then
+                            echo "Grafana is healthy."
+                        else
+                            echo "Grafana health check failed."
+                            cat /tmp/grafana-health.json
+                            exit 1
+                        fi
+                    '''
+
+                    echo "========================================"
+                    echo "MONITORING VALIDATION SUCCESSFUL"
+                    echo "========================================"
+                    echo "Prometheus : READY"
+                    echo "Production : UP"
+                    echo "Staging    : UP"
+                    echo "Alerts     : 4 LOADED"
+                    echo "Grafana    : HEALTHY"
+                    echo "========================================"
+                }
+            }
+        }
     }
 
     post {
@@ -869,6 +975,8 @@ pipeline {
             """
 
             echo "Production: http://localhost:3000"
+            echo "Monitoring: http://localhost:3002"
+            echo "Prometheus: http://localhost:9090"
         }
 
         failure {
