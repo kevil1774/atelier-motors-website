@@ -178,11 +178,55 @@ pipeline {
                 }
             }
         }
+
+        stage('SECURITY') {
+            steps {
+                script {
+
+                    echo "========================================"
+                    echo "Security Scanning"
+                    echo "========================================"
+
+                    echo "Running npm audit..."
+
+                    sh '''
+                        npm audit --audit-level=high
+                    '''
+
+                    echo "Running Trivy backend image scan..."
+
+                    sh """
+                        trivy image \
+                            --scanners vuln \
+                            --severity HIGH,CRITICAL \
+                            --exit-code 1 \
+                            --format table \
+                            ${BACKEND_IMAGE}:${VERSION_TAG}
+                    """
+
+                    echo "Running Trivy frontend image scan..."
+
+                    sh """
+                        trivy image \
+                            --scanners vuln \
+                            --severity HIGH,CRITICAL \
+                            --exit-code 1 \
+                            --format table \
+                            ${FRONTEND_IMAGE}:${VERSION_TAG}
+                    """
+
+                    echo "========================================"
+                    echo "Security scans completed successfully."
+                    echo "No HIGH or CRITICAL vulnerabilities detected."
+                    echo "========================================"
+                }
+            }
+        }
     }
 
     post {
         success {
-            echo 'BUILD, TEST and CODE QUALITY stages completed successfully.'
+            echo 'BUILD, TEST, CODE QUALITY and SECURITY stages completed successfully.'
         }
 
         failure {
