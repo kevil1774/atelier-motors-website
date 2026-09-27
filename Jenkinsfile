@@ -159,15 +159,34 @@ pipeline {
                 }
             }
         }
+
+        stage('CODE QUALITY') {
+            steps {
+                script {
+
+                    def scannerHome = tool 'SonarScanner'
+
+                    withSonarQubeEnv('SonarQube') {
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner
+                        """
+                    }
+
+                    timeout(time: 10, unit: 'MINUTES') {
+                        waitForQualityGate abortPipeline: true
+                    }
+                }
+            }
+        }
     }
 
     post {
         success {
-            echo 'BUILD and TEST stages completed successfully.'
+            echo 'BUILD, TEST and CODE QUALITY stages completed successfully.'
         }
 
         failure {
-            echo 'BUILD or TEST stage failed.'
+            echo 'One or more pipeline stages failed.'
         }
 
         always {
