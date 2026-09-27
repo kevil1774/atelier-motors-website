@@ -1,0 +1,15 @@
+workflow-aggregator
+pipeline-stage-view
+git
+github
+docker-workflow
+sonar
+junit
+htmlpublisher
+coverage
+credentials-binding
+email-ext
+timestamper
+ws-cleanup
+pipeline-utility-steps
+blueocean

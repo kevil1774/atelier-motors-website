@@ -1,0 +1,63 @@
+services:
+
+  jenkins:
+    build:
+      context: .
+      dockerfile: jenkins/Dockerfile
+    container_name: jenkins
+    restart: unless-stopped
+
+    ports:
+      - "8081:8080"
+      - "50000:50000"
+
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    group_add:
+      - "0"
+
+    environment:
+      JAVA_OPTS: "-Djenkins.install.runSetupWizard=false"
+
+    networks:
+      - ci-network
+
+  sonarqube:
+    container_name: sonarqube
+    image: sonarqube:community
+    restart: unless-stopped
+
+    environment:
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+
+    ports:
+      - "9000:9000"
+
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+
+    networks:
+      - ci-network
+
+
+networks:
+  ci-network:
+    name: atelier-ci-network
+
+
+volumes:
+  jenkins_home:
+    name: atelier-jenkins-home
+
+  sonarqube_data:
+    name: atelier-sonarqube-data
+
+  sonarqube_extensions:
+    name: atelier-sonarqube-extensions
+
+  sonarqube_logs:
+    name: atelier-sonarqube-logs

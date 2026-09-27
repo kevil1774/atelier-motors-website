@@ -2,6 +2,10 @@ FROM jenkins/jenkins:lts-jdk17
 
 USER root
 
+# ============================================================
+# Install required system packages
+# ============================================================
+
 RUN apt-get update && \
     apt-get install -y \
         ca-certificates \
@@ -54,11 +58,6 @@ RUN jenkins-plugin-cli \
 # ============================================================
 # Docker socket access
 # ============================================================
-
-# The Docker socket in the current Docker Desktop setup
-# is owned by root:root with permissions 660.
-#
-# Add Jenkins to group 0 so Jenkins can access the socket.
 
 RUN usermod -aG 0 jenkins
 

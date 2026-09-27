@@ -13,6 +13,7 @@
     "start": "npm run start -w backend"
   },
   "devDependencies": {
+    "c8": "^12.0.0",
     "concurrently": "^9.1.0"
   },
   "allowScripts": {
