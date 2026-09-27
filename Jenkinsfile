@@ -4,19 +4,25 @@ pipeline {
     options {
         timestamps()
         timeout(time: 30, unit: 'MINUTES')
+
         buildDiscarder(
             logRotator(
                 numToKeepStr: '10',
                 artifactNumToKeepStr: '10'
             )
         )
+
         disableConcurrentBuilds()
     }
 
     environment {
         APP_NAME = 'atelier-motors'
+
         BACKEND_IMAGE = 'atelier-motors-backend'
         FRONTEND_IMAGE = 'atelier-motors-frontend'
+
+        DOCKERHUB_NAMESPACE = 'kevilpatel17'
+
         TEST_MONGODB_URI = 'mongodb://atelier-test-mongodb:27017/atelier-motors-test'
     }
 
@@ -34,6 +40,7 @@ pipeline {
 
                     env.VERSION_TAG = "${env.APP_VERSION}"
                     env.SHA_TAG = "${env.APP_VERSION}-${env.GIT_SHA}"
+                    env.RELEASE_TAG = "v${env.APP_VERSION}"
 
                     echo "========================================"
                     echo "Atelier Motors Build"
@@ -43,6 +50,7 @@ pipeline {
                     echo "Git SHA     : ${env.GIT_SHA}"
                     echo "Version tag : ${env.VERSION_TAG}"
                     echo "SHA tag     : ${env.SHA_TAG}"
+                    echo "Release tag : ${env.RELEASE_TAG}"
                     echo "========================================"
 
                     sh """
@@ -69,9 +77,14 @@ pipeline {
                     sh """
                         echo "Application: ${APP_NAME}" \
                             > build-artifacts/build-info.txt
+
                         echo "Version: ${VERSION_TAG}" \
                             >> build-artifacts/build-info.txt
+
                         echo "Git SHA: ${GIT_SHA}" \
+                            >> build-artifacts/build-info.txt
+
+                        echo "Release Tag: ${RELEASE_TAG}" \
                             >> build-artifacts/build-info.txt
                     """
 
@@ -89,6 +102,7 @@ pipeline {
                     sh '''
                         rm -rf backend/test-results
                         rm -rf backend/coverage
+
                         mkdir -p backend/test-results
                     '''
 
@@ -467,9 +481,6 @@ pipeline {
                             env.PREVIOUS_FRONTEND_TAG?.trim()
                         ) {
 
-                            echo "Previous backend tag : ${env.PREVIOUS_BACKEND_TAG}"
-                            echo "Previous frontend tag: ${env.PREVIOUS_FRONTEND_TAG}"
-
                             withCredentials([
                                 string(
                                     credentialsId: 'jwt-secret',
@@ -504,7 +515,6 @@ pipeline {
                                         echo "Waiting for rollback MongoDB..."
 
                                         for i in $(seq 1 30); do
-
                                             if docker exec atelier-staging-mongodb \
                                                 mongosh --quiet \
                                                 --eval "db.adminCommand('ping').ok" \
@@ -553,9 +563,6 @@ pipeline {
                                             http://atelier-staging-backend:5000/api/health \
                                             > /tmp/rollback-health.json
                                         then
-
-                                            echo "Rollback backend response:"
-                                            cat /tmp/rollback-health.json
 
                                             STATUS=$(jq -r '.status' /tmp/rollback-health.json)
 
@@ -619,6 +626,274 @@ pipeline {
                 }
             }
         }
+
+        stage('RELEASE') {
+            steps {
+                script {
+
+                    echo "========================================"
+                    echo "RELEASE"
+                    echo "========================================"
+
+                    echo "Docker Hub namespace: ${env.DOCKERHUB_NAMESPACE}"
+                    echo "Version tag         : ${env.VERSION_TAG}"
+                    echo "SHA tag             : ${env.SHA_TAG}"
+                    echo "Git release tag     : ${env.RELEASE_TAG}"
+
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: 'dockerhub-creds',
+                            usernameVariable: 'DOCKERHUB_USERNAME',
+                            passwordVariable: 'DOCKERHUB_TOKEN'
+                        )
+                    ]) {
+
+                        sh '''
+                            echo "Logging in to Docker Hub..."
+
+                            set +x
+
+                            echo "$DOCKERHUB_TOKEN" | \
+                                docker login \
+                                    --username "$DOCKERHUB_USERNAME" \
+                                    --password-stdin
+
+                            set -x
+                        '''
+
+                        sh """
+                            docker tag \
+                                ${BACKEND_IMAGE}:${VERSION_TAG} \
+                                ${DOCKERHUB_NAMESPACE}/${BACKEND_IMAGE}:${VERSION_TAG}
+
+                            docker tag \
+                                ${BACKEND_IMAGE}:${SHA_TAG} \
+                                ${DOCKERHUB_NAMESPACE}/${BACKEND_IMAGE}:${SHA_TAG}
+
+                            docker tag \
+                                ${FRONTEND_IMAGE}:${VERSION_TAG} \
+                                ${DOCKERHUB_NAMESPACE}/${FRONTEND_IMAGE}:${VERSION_TAG}
+
+                            docker tag \
+                                ${FRONTEND_IMAGE}:${SHA_TAG} \
+                                ${DOCKERHUB_NAMESPACE}/${FRONTEND_IMAGE}:${SHA_TAG}
+                        """
+
+                        sh """
+                            docker push \
+                                ${DOCKERHUB_NAMESPACE}/${BACKEND_IMAGE}:${VERSION_TAG}
+
+                            docker push \
+                                ${DOCKERHUB_NAMESPACE}/${BACKEND_IMAGE}:${SHA_TAG}
+
+                            docker push \
+                                ${DOCKERHUB_NAMESPACE}/${FRONTEND_IMAGE}:${VERSION_TAG}
+
+                            docker push \
+                                ${DOCKERHUB_NAMESPACE}/${FRONTEND_IMAGE}:${SHA_TAG}
+                        """
+
+                        sh '''
+                            docker logout
+                        '''
+                    }
+
+                    echo "Docker images successfully pushed to Docker Hub."
+
+                    sh """
+                        git config user.name "Jenkins"
+                        git config user.email "jenkins@atelier-motors.local"
+
+                        git tag -a "${RELEASE_TAG}" \
+                            -m "Atelier Motors release ${VERSION_TAG}"
+                    """
+
+                    withCredentials([
+                        gitUsernamePassword(
+                            credentialsId: 'github-creds',
+                            gitToolName: 'Default'
+                        )
+                    ]) {
+
+                        sh """
+                            git push origin \
+                                "refs/tags/${RELEASE_TAG}"
+                        """
+                    }
+
+                    echo "========================================"
+                    echo "RELEASE ARTIFACTS PUBLISHED"
+                    echo "========================================"
+                    echo "Docker backend:"
+                    echo "  ${DOCKERHUB_NAMESPACE}/${BACKEND_IMAGE}:${VERSION_TAG}"
+                    echo "  ${DOCKERHUB_NAMESPACE}/${BACKEND_IMAGE}:${SHA_TAG}"
+                    echo ""
+                    echo "Docker frontend:"
+                    echo "  ${DOCKERHUB_NAMESPACE}/${FRONTEND_IMAGE}:${VERSION_TAG}"
+                    echo "  ${DOCKERHUB_NAMESPACE}/${FRONTEND_IMAGE}:${SHA_TAG}"
+                    echo ""
+                    echo "Git tag: ${RELEASE_TAG}"
+                    echo "========================================"
+                }
+            }
+        }
+
+        stage('PRODUCTION APPROVAL') {
+            steps {
+                timeout(
+                    time: 10,
+                    unit: 'MINUTES'
+                ) {
+                    input(
+                        message: "Promote Atelier Motors ${env.VERSION_TAG} to production?",
+                        ok: "Deploy to Production"
+                    )
+                }
+            }
+        }
+
+        stage('PRODUCTION') {
+            steps {
+                script {
+
+                    echo "========================================"
+                    echo "PRODUCTION DEPLOYMENT"
+                    echo "========================================"
+
+                    sh '''
+                        docker network inspect atelier-ci-network \
+                            >/dev/null 2>&1 || \
+                        docker network create atelier-ci-network
+                    '''
+
+                    withCredentials([
+                        string(
+                            credentialsId: 'production-jwt-secret',
+                            variable: 'PRODUCTION_JWT_SECRET'
+                        )
+                    ]) {
+
+                        withEnv([
+                            "BACKEND_IMAGE=${env.DOCKERHUB_NAMESPACE}/${env.BACKEND_IMAGE}",
+                            "FRONTEND_IMAGE=${env.DOCKERHUB_NAMESPACE}/${env.FRONTEND_IMAGE}",
+                            "IMAGE_TAG=${env.VERSION_TAG}",
+                            "APP_VERSION=${env.VERSION_TAG}"
+                        ]) {
+
+                            echo "Deploying exact released images..."
+                            echo "Version: ${env.VERSION_TAG}"
+
+                            sh '''
+                                docker compose \
+                                    -p atelier-production \
+                                    -f docker-compose.production.yml \
+                                    down \
+                                    --remove-orphans \
+                                    || true
+                            '''
+
+                            sh '''
+                                docker compose \
+                                    -p atelier-production \
+                                    -f docker-compose.production.yml \
+                                    pull
+                            '''
+
+                            sh '''
+                                docker compose \
+                                    -p atelier-production \
+                                    -f docker-compose.production.yml \
+                                    up -d
+                            '''
+
+                            sh '''
+                                echo "Waiting for production backend..."
+
+                                for i in $(seq 1 30); do
+
+                                    if curl -fsS \
+                                        http://atelier-production-backend:5000/api/health \
+                                        > /tmp/production-health.json
+                                    then
+
+                                        echo "Production backend response:"
+                                        cat /tmp/production-health.json
+
+                                        STATUS=$(jq -r '.status' /tmp/production-health.json)
+                                        VERSION=$(jq -r '.version' /tmp/production-health.json)
+
+                                        echo "Detected status : ${STATUS}"
+                                        echo "Detected version: ${VERSION}"
+                                        echo "Expected version: ${APP_VERSION}"
+
+                                        if [ "${STATUS}" = "ok" ] && \
+                                           [ "${VERSION}" = "${APP_VERSION}" ]
+                                        then
+                                            echo "Production backend health and version are correct."
+                                            exit 0
+                                        fi
+                                    fi
+
+                                    sleep 2
+                                done
+
+                                echo "Production backend health/version check FAILED."
+                                exit 1
+                            '''
+
+                            sh '''
+                                echo "Checking production frontend..."
+
+                                for i in $(seq 1 30); do
+
+                                    if curl -fsS \
+                                        http://atelier-production-frontend:8080/health \
+                                        >/dev/null 2>&1
+                                    then
+                                        echo "Production frontend is healthy."
+                                        exit 0
+                                    fi
+
+                                    sleep 2
+                                done
+
+                                echo "Production frontend health check FAILED."
+                                exit 1
+                            '''
+
+                            sh '''
+                                echo "Checking production frontend on port 3000..."
+
+                                for i in $(seq 1 30); do
+
+                                    if curl -fsS \
+                                        http://host.docker.internal:3000/health \
+                                        >/dev/null 2>&1
+                                    then
+                                        echo "Production frontend port 3000 is reachable."
+                                        exit 0
+                                    fi
+
+                                    sleep 2
+                                done
+
+                                echo "Production frontend port 3000 check FAILED."
+                                exit 1
+                            '''
+
+                            echo "========================================"
+                            echo "PRODUCTION DEPLOYMENT SUCCESSFUL"
+                            echo "========================================"
+                            echo "Version : ${env.VERSION_TAG}"
+                            echo "Git SHA : ${env.GIT_SHA}"
+                            echo "Frontend: http://localhost:3000"
+                            echo "Backend : http://localhost:5002"
+                            echo "========================================"
+                        }
+                    }
+                }
+            }
+        }
     }
 
     post {
@@ -633,7 +908,10 @@ pipeline {
 
             Version : ${env.VERSION_TAG}
             Git SHA : ${env.GIT_SHA}
+            Release : ${env.RELEASE_TAG}
             """
+
+            echo "Production: http://localhost:3000"
         }
 
         failure {

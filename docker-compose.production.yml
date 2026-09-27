@@ -1,0 +1,70 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: atelier-production-mongodb
+    restart: unless-stopped
+    volumes:
+      - production-mongodb-data:/data/db
+    networks:
+      - ci-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mongosh --quiet --eval \"db.adminCommand('ping').ok\""
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: ${BACKEND_IMAGE}:${IMAGE_TAG}
+    container_name: atelier-production-backend
+    restart: unless-stopped
+    ports:
+      - "5002:5000"
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      APP_VERSION: ${APP_VERSION}
+      MONGODB_URI: mongodb://mongodb:27017/atelier-motors
+      JWT_SECRET: ${PRODUCTION_JWT_SECRET}
+      UPLOAD_DIR: /app/uploads
+      CLIENT_URL: http://localhost:3000
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - ci-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:5000/api/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  frontend:
+    image: ${FRONTEND_IMAGE}:${IMAGE_TAG}
+    container_name: atelier-production-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - ci-network
+
+networks:
+  ci-network:
+    external: true
+    name: atelier-ci-network
+
+volumes:
+  production-mongodb-data:
