@@ -880,11 +880,13 @@ pipeline {
                         echo "Checking production backend target..."
 
                         jq -e '
-                            any(
-                                .data.activeTargets[];
-                                .labels.job == "atelier-production-backend"
-                                and .health == "up"
-                            )
+                            [
+                                .data.activeTargets[] |
+                                select(
+                                    .labels.job == "atelier-production-backend"
+                                    and .health == "up"
+                                )
+                            ] | length > 0
                         ' /tmp/prometheus-targets.json >/dev/null
 
                         echo "Production backend monitoring target is UP."
@@ -892,11 +894,13 @@ pipeline {
                         echo "Checking staging backend target..."
 
                         jq -e '
-                            any(
-                                .data.activeTargets[];
-                                .labels.job == "atelier-staging-backend"
-                                and .health == "up"
-                            )
+                            [
+                                .data.activeTargets[] |
+                                select(
+                                    .labels.job == "atelier-staging-backend"
+                                    and .health == "up"
+                                )
+                            ] | length > 0
                         ' /tmp/prometheus-targets.json >/dev/null
 
                         echo "Staging backend monitoring target is UP."
@@ -916,10 +920,10 @@ pipeline {
                             AtelierHighRequestLatency
                         do
                             jq -e --arg RULE "$RULE" '
-                                any(
-                                    .data.groups[].rules[];
-                                    .name == $RULE
-                                )
+                                [
+                                    .data.groups[].rules[] |
+                                    select(.name == $RULE)
+                                ] | length > 0
                             ' /tmp/prometheus-rules.json >/dev/null
 
                             echo "Verified alert rule: ${RULE}"
