@@ -7,6 +7,7 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
@@ -14,7 +15,29 @@ services:
     networks:
       - ci-network
 
+  grafana:
+    image: grafana/grafana:latest
+    container_name: atelier-grafana
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/atelier-motors-dashboard.json:/var/lib/grafana/dashboards/atelier-motors-dashboard.json:ro
+    depends_on:
+      - prometheus
+    networks:
+      - ci-network
+
 networks:
   ci-network:
     external: true
     name: atelier-ci-network
+
+volumes:
+  prometheus-data:
+    name: atelier-prometheus-data
+
+  grafana-data:
+    name: atelier-grafana-data
