@@ -1,0 +1,64 @@
+groups:
+  - name: atelier-motors-alerts
+    interval: 15s
+
+    rules:
+      - alert: AtelierProductionBackendDown
+        expr: up{job="atelier-production-backend"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          environment: production
+          service: backend
+        annotations:
+          summary: "Production backend is down"
+          description: "The Atelier Motors production backend has been unavailable for more than 30 seconds."
+
+      - alert: AtelierStagingBackendDown
+        expr: up{job="atelier-staging-backend"} == 0
+        for: 30s
+        labels:
+          severity: warning
+          environment: staging
+          service: backend
+        annotations:
+          summary: "Staging backend is down"
+          description: "The Atelier Motors staging backend has been unavailable for more than 30 seconds."
+
+      - alert: AtelierHighErrorRate
+        expr: |
+          (
+            sum by (environment) (
+              rate(atelier_http_requests_total{status_code=~"4..|5.."}[5m])
+            )
+            /
+            clamp_min(
+              sum by (environment) (
+                rate(atelier_http_requests_total[5m])
+              ),
+              0.001
+            )
+          ) > 0.05
+        for: 1m
+        labels:
+          severity: warning
+          service: backend
+        annotations:
+          summary: "High HTTP error rate"
+          description: "The {{ $labels.environment }} backend has an HTTP error rate above 5% for more than 1 minute."
+
+      - alert: AtelierHighRequestLatency
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (environment, le) (
+              rate(atelier_http_request_duration_seconds_bucket[5m])
+            )
+          ) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+          service: backend
+        annotations:
+          summary: "High backend request latency"
+          description: "The {{ $labels.environment }} backend has a p95 request latency above 500ms for more than 2 minutes."
