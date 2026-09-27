@@ -3,43 +3,28 @@ pipeline {
 
     options {
         timestamps()
-
-        timeout(
-            time: 30,
-            unit: 'MINUTES'
-        )
-
+        timeout(time: 30, unit: 'MINUTES')
         buildDiscarder(
             logRotator(
                 numToKeepStr: '10',
                 artifactNumToKeepStr: '10'
             )
         )
-
         disableConcurrentBuilds()
     }
 
     environment {
         APP_NAME = 'atelier-motors'
-
         BACKEND_IMAGE = 'atelier-motors-backend'
         FRONTEND_IMAGE = 'atelier-motors-frontend'
-
         TEST_MONGODB_URI = 'mongodb://atelier-test-mongodb:27017/atelier-motors-test'
     }
 
     stages {
 
-        /*
-         * ============================================================
-         * BUILD
-         * ============================================================
-         */
-
         stage('BUILD') {
             steps {
                 script {
-
                     env.APP_VERSION = "1.0.${env.BUILD_NUMBER}"
 
                     env.GIT_SHA = sh(
@@ -84,10 +69,8 @@ pipeline {
                     sh """
                         echo "Application: ${APP_NAME}" \
                             > build-artifacts/build-info.txt
-
                         echo "Version: ${VERSION_TAG}" \
                             >> build-artifacts/build-info.txt
-
                         echo "Git SHA: ${GIT_SHA}" \
                             >> build-artifacts/build-info.txt
                     """
@@ -100,17 +83,9 @@ pipeline {
             }
         }
 
-
-        /*
-         * ============================================================
-         * TEST
-         * ============================================================
-         */
-
         stage('TEST') {
             steps {
                 script {
-
                     sh '''
                         rm -rf backend/test-results
                         rm -rf backend/coverage
@@ -133,7 +108,6 @@ pipeline {
                         echo "Waiting for MongoDB..."
 
                         for i in $(seq 1 30); do
-
                             if docker exec atelier-test-mongodb \
                                 mongosh --quiet \
                                 --eval "db.adminCommand('ping').ok" \
@@ -173,7 +147,6 @@ pipeline {
 
             post {
                 always {
-
                     junit(
                         testResults: 'backend/test-results/junit.xml',
                         allowEmptyResults: false
@@ -201,21 +174,12 @@ pipeline {
             }
         }
 
-
-        /*
-         * ============================================================
-         * CODE QUALITY
-         * ============================================================
-         */
-
         stage('CODE QUALITY') {
             steps {
                 script {
-
                     def scannerHome = tool 'SonarScanner'
 
                     withSonarQubeEnv('SonarQube') {
-
                         sh """
                             ${scannerHome}/bin/sonar-scanner
                         """
@@ -225,7 +189,6 @@ pipeline {
                         time: 10,
                         unit: 'MINUTES'
                     ) {
-
                         waitForQualityGate(
                             abortPipeline: true
                         )
@@ -234,17 +197,9 @@ pipeline {
             }
         }
 
-
-        /*
-         * ============================================================
-         * SECURITY
-         * ============================================================
-         */
-
         stage('SECURITY') {
             steps {
                 script {
-
                     echo "========================================"
                     echo "Security Scanning"
                     echo "========================================"
@@ -285,42 +240,19 @@ pipeline {
             }
         }
 
-
-        /*
-         * ============================================================
-         * DEPLOY
-         *
-         * Staging:
-         *   Frontend -> localhost:3001
-         *   Backend  -> localhost:5001
-         *
-         * Uses docker-compose.staging.yml.
-         * Automatically rolls back to the previous images if
-         * staging health/version validation fails.
-         * ============================================================
-         */
-
         stage('DEPLOY') {
             steps {
                 script {
-
                     echo "========================================"
                     echo "STAGING DEPLOYMENT"
                     echo "========================================"
 
-                    /*
-                     * Make sure the shared CI network exists.
-                     */
                     sh '''
                         docker network inspect atelier-ci-network \
                             >/dev/null 2>&1 || \
                         docker network create atelier-ci-network
                     '''
 
-                    /*
-                     * Capture currently deployed images before
-                     * replacing the staging deployment.
-                     */
                     env.PREVIOUS_BACKEND_IMAGE = sh(
                         script: '''
                             docker inspect \
@@ -344,16 +276,7 @@ pipeline {
                     echo "Previous backend image: ${env.PREVIOUS_BACKEND_IMAGE ?: 'none'}"
                     echo "Previous frontend image: ${env.PREVIOUS_FRONTEND_IMAGE ?: 'none'}"
 
-                    /*
-                     * Extract previous version tags.
-                     *
-                     * Example:
-                     * atelier-motors-backend:1.0.10
-                     * becomes:
-                     * 1.0.10
-                     */
                     if (env.PREVIOUS_BACKEND_IMAGE?.trim()) {
-
                         env.PREVIOUS_BACKEND_TAG = sh(
                             script: """
                                 echo '${env.PREVIOUS_BACKEND_IMAGE}' | \
@@ -364,7 +287,6 @@ pipeline {
                     }
 
                     if (env.PREVIOUS_FRONTEND_IMAGE?.trim()) {
-
                         env.PREVIOUS_FRONTEND_TAG = sh(
                             script: """
                                 echo '${env.PREVIOUS_FRONTEND_IMAGE}' | \
@@ -377,10 +299,6 @@ pipeline {
                     echo "Previous backend tag: ${env.PREVIOUS_BACKEND_TAG ?: 'none'}"
                     echo "Previous frontend tag: ${env.PREVIOUS_FRONTEND_TAG ?: 'none'}"
 
-
-                    /*
-                     * Deploy current build.
-                     */
                     withCredentials([
                         string(
                             credentialsId: 'jwt-secret',
@@ -397,9 +315,6 @@ pipeline {
 
                             echo "Deploying version ${env.VERSION_TAG}..."
 
-                            /*
-                             * Remove the previous Compose deployment.
-                             */
                             sh '''
                                 docker compose \
                                     -p atelier-staging \
@@ -409,9 +324,6 @@ pipeline {
                                     || true
                             '''
 
-                            /*
-                             * Start MongoDB first.
-                             */
                             sh '''
                                 docker compose \
                                     -p atelier-staging \
@@ -419,14 +331,10 @@ pipeline {
                                     up -d mongodb
                             '''
 
-                            /*
-                             * Wait for staging MongoDB.
-                             */
                             sh '''
                                 echo "Waiting for staging MongoDB..."
 
                                 for i in $(seq 1 30); do
-
                                     if docker exec atelier-staging-mongodb \
                                         mongosh --quiet \
                                         --eval "db.adminCommand('ping').ok" \
@@ -443,9 +351,6 @@ pipeline {
                                 exit 1
                             '''
 
-                            /*
-                             * Start backend.
-                             */
                             sh '''
                                 docker compose \
                                     -p atelier-staging \
@@ -453,9 +358,6 @@ pipeline {
                                     up -d backend
                             '''
 
-                            /*
-                             * Start frontend.
-                             */
                             sh '''
                                 docker compose \
                                     -p atelier-staging \
@@ -463,9 +365,6 @@ pipeline {
                                     up -d frontend
                             '''
 
-                            /*
-                             * Check backend health AND version.
-                             */
                             sh '''
                                 echo "Checking staging backend..."
 
@@ -479,10 +378,15 @@ pipeline {
                                         echo "Backend response:"
                                         cat /tmp/staging-health.json
 
-                                        if grep -q "\"status\":\"ok\"" \
-                                            /tmp/staging-health.json && \
-                                           grep -q "\"version\":\"$APP_VERSION\"" \
-                                            /tmp/staging-health.json
+                                        STATUS=$(jq -r '.status' /tmp/staging-health.json)
+                                        VERSION=$(jq -r '.version' /tmp/staging-health.json)
+
+                                        echo "Detected status : ${STATUS}"
+                                        echo "Detected version: ${VERSION}"
+                                        echo "Expected version: ${APP_VERSION}"
+
+                                        if [ "${STATUS}" = "ok" ] && \
+                                           [ "${VERSION}" = "${APP_VERSION}" ]
                                         then
                                             echo "Staging backend health and version are correct."
                                             exit 0
@@ -496,9 +400,6 @@ pipeline {
                                 exit 1
                             '''
 
-                            /*
-                             * Check frontend health.
-                             */
                             sh '''
                                 echo "Checking staging frontend..."
 
@@ -519,9 +420,6 @@ pipeline {
                                 exit 1
                             '''
 
-                            /*
-                             * Check the public staging frontend endpoint.
-                             */
                             sh '''
                                 echo "Checking staging frontend on port 3001..."
 
@@ -555,26 +453,15 @@ pipeline {
                 }
             }
 
-            /*
-             * ========================================================
-             * AUTOMATIC ROLLBACK
-             * ========================================================
-             */
-
             post {
                 failure {
                     script {
-
                         echo "========================================"
                         echo "STAGING DEPLOYMENT FAILED"
                         echo "========================================"
                         echo "Starting automatic rollback..."
                         echo "========================================"
 
-                        /*
-                         * Rollback only when a previous deployment
-                         * actually exists.
-                         */
                         if (
                             env.PREVIOUS_BACKEND_TAG?.trim() &&
                             env.PREVIOUS_FRONTEND_TAG?.trim()
@@ -590,9 +477,6 @@ pipeline {
                                 )
                             ]) {
 
-                                /*
-                                 * Remove failed deployment.
-                                 */
                                 sh '''
                                     docker compose \
                                         -p atelier-staging \
@@ -602,9 +486,6 @@ pipeline {
                                         || true
                                 '''
 
-                                /*
-                                 * Restore MongoDB.
-                                 */
                                 withEnv([
                                     "BACKEND_IMAGE=${env.BACKEND_IMAGE}",
                                     "FRONTEND_IMAGE=${env.FRONTEND_IMAGE}",
@@ -640,9 +521,6 @@ pipeline {
                                         exit 1
                                     '''
 
-                                    /*
-                                     * Restore previous backend.
-                                     */
                                     sh '''
                                         docker compose \
                                             -p atelier-staging \
@@ -651,10 +529,6 @@ pipeline {
                                     '''
                                 }
 
-                                /*
-                                 * Restore previous frontend using
-                                 * its own previous tag.
-                                 */
                                 withEnv([
                                     "BACKEND_IMAGE=${env.BACKEND_IMAGE}",
                                     "FRONTEND_IMAGE=${env.FRONTEND_IMAGE}",
@@ -670,9 +544,6 @@ pipeline {
                                     '''
                                 }
 
-                                /*
-                                 * Verify rollback backend.
-                                 */
                                 sh '''
                                     echo "Checking rollback backend..."
 
@@ -686,8 +557,9 @@ pipeline {
                                             echo "Rollback backend response:"
                                             cat /tmp/rollback-health.json
 
-                                            if grep -q "\"status\":\"ok\"" \
-                                                /tmp/rollback-health.json
+                                            STATUS=$(jq -r '.status' /tmp/rollback-health.json)
+
+                                            if [ "${STATUS}" = "ok" ]
                                             then
                                                 echo "Rollback backend is healthy."
                                                 exit 0
@@ -701,9 +573,6 @@ pipeline {
                                     exit 1
                                 '''
 
-                                /*
-                                 * Verify rollback frontend.
-                                 */
                                 sh '''
                                     echo "Checking rollback frontend..."
 
@@ -751,12 +620,6 @@ pipeline {
             }
         }
     }
-
-    /*
-     * ================================================================
-     * PIPELINE POST ACTIONS
-     * ================================================================
-     */
 
     post {
 
