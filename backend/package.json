@@ -12,6 +12,7 @@
     "test:coverage:check": "c8 --check-coverage --lines 40 --functions 40 --branches 40 --statements 40 node --test"
   },
   "dependencies": {
+    "@prometheus-io/client": "^0.16.1",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",

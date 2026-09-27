@@ -1,0 +1,22 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'atelier-production-backend'
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - 'atelier-production-backend:5000'
+        labels:
+          environment: production
+          service: backend
+
+  - job_name: 'atelier-staging-backend'
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - 'atelier-staging-backend:5000'
+        labels:
+          environment: staging
+          service: backend
