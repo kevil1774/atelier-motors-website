@@ -873,37 +873,67 @@ pipeline {
                     echo "Checking Prometheus targets..."
 
                     sh '''
-                        curl -fsS \
-                            http://host.docker.internal:9090/api/v1/targets \
-                            > /tmp/prometheus-targets.json
+                        echo "Waiting for Prometheus production target..."
 
-                        echo "Checking production backend target..."
+                        for i in $(seq 1 12); do
+                            curl -fsS \
+                                http://host.docker.internal:9090/api/v1/targets \
+                                > /tmp/prometheus-targets.json
 
-                        jq -e '
-                            [
-                                .data.activeTargets[] |
-                                select(
-                                    .labels.job == "atelier-production-backend"
-                                    and .health == "up"
-                                )
-                            ] | length > 0
-                        ' /tmp/prometheus-targets.json >/dev/null
+                            if jq -e '
+                                [
+                                    .data.activeTargets[] |
+                                    select(
+                                        .labels.job == "atelier-production-backend"
+                                        and .health == "up"
+                                    )
+                                ] | length > 0
+                            ' /tmp/prometheus-targets.json >/dev/null
+                            then
+                                echo "Production backend monitoring target is UP."
+                                break
+                            fi
 
-                        echo "Production backend monitoring target is UP."
+                            if [ "$i" -eq 12 ]; then
+                                echo "Production backend monitoring target did not become UP within 60 seconds."
+                                cat /tmp/prometheus-targets.json
+                                exit 1
+                            fi
 
-                        echo "Checking staging backend target..."
+                            echo "Production target is not UP yet. Waiting 5 seconds..."
+                            sleep 5
+                        done
 
-                        jq -e '
-                            [
-                                .data.activeTargets[] |
-                                select(
-                                    .labels.job == "atelier-staging-backend"
-                                    and .health == "up"
-                                )
-                            ] | length > 0
-                        ' /tmp/prometheus-targets.json >/dev/null
+                        echo "Waiting for Prometheus staging target..."
 
-                        echo "Staging backend monitoring target is UP."
+                        for i in $(seq 1 12); do
+                            curl -fsS \
+                                http://host.docker.internal:9090/api/v1/targets \
+                                > /tmp/prometheus-targets.json
+
+                            if jq -e '
+                                [
+                                    .data.activeTargets[] |
+                                    select(
+                                        .labels.job == "atelier-staging-backend"
+                                        and .health == "up"
+                                    )
+                                ] | length > 0
+                            ' /tmp/prometheus-targets.json >/dev/null
+                            then
+                                echo "Staging backend monitoring target is UP."
+                                break
+                            fi
+
+                            if [ "$i" -eq 12 ]; then
+                                echo "Staging backend monitoring target did not become UP within 60 seconds."
+                                cat /tmp/prometheus-targets.json
+                                exit 1
+                            fi
+
+                            echo "Staging target is not UP yet. Waiting 5 seconds..."
+                            sleep 5
+                        done
                     '''
 
                     echo "Checking Prometheus alert rules..."
