@@ -2551,10 +2551,6 @@ function Manage({type,title}){
 
             <div
                 className="modal-backdrop"
-                onClick={e=>
-                    e.target===e.currentTarget&&
-                    setModal(false)
-                }
             >
 
                 <form
