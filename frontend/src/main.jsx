@@ -1,4 +1,4 @@
-import React,{createContext,useContext,useEffect,useState} from 'react';
+﻿import React,{createContext,useContext,useEffect,useState} from 'react';
 import{createRoot}from'react-dom/client';
 import{BrowserRouter,Routes,Route,Link,Navigate,useNavigate,useParams}from'react-router-dom';
 import axios from'axios';
@@ -99,7 +99,7 @@ function App(){
      * Wait until the existing backend session has been checked.
      */
     if(authLoading)
-        return <div className="loading">Loading your session…</div>;
+        return <div className="loading">Loading your sessionâ€¦</div>;
 
 
     return <Auth.Provider value={{user,login,logout}}>
@@ -332,7 +332,7 @@ function Footer(){
 
 
         <span>
-            © 2025 Atelier Motors
+            Â© 2025 Atelier Motors
         </span>
 
 
@@ -436,7 +436,7 @@ function Home(){
 
 
             <div className="hero-side">
-                EST. 2012&nbsp; · &nbsp;LOS ANGELES
+                EST. 2012&nbsp; Â· &nbsp;LOS ANGELES
             </div>
 
         </section>
@@ -539,7 +539,7 @@ function Home(){
                 </h2>
 
                 <p>
-                    We don’t believe in endless listings.
+                    We donâ€™t believe in endless listings.
                     We believe in the right one. Every car in
                     our collection earns its place, so you can
                     spend less time searching and more time
@@ -691,7 +691,7 @@ function CarCard({car:c}){
                 <p>
                     {c.variant||c.transmission||'Curated selection'}
                     {' '}
-                    <span>·</span>
+                    <span>Â·</span>
                     {' '}
                     {Number(c.mileage||0).toLocaleString()} mi
                 </p>
@@ -863,7 +863,7 @@ function Inventory(){
         {loading?
 
             <div className="loading">
-                Loading the collection…
+                Loading the collectionâ€¦
             </div>
 
             :
@@ -912,7 +912,7 @@ function Details(){
 
     if(!car)
         return <div className="loading">
-            Finding your vehicle…
+            Finding your vehicleâ€¦
         </div>;
 
 
@@ -922,7 +922,7 @@ function Details(){
             className="back-link"
             to="/cars"
         >
-            ← Back to collection
+            â† Back to collection
         </Link>
 
 
@@ -1160,10 +1160,10 @@ function About(){
             </h2>
 
             <p>
-                We’re a small team of people who care deeply about
+                Weâ€™re a small team of people who care deeply about
                 cars and the people who drive them. Each vehicle is
                 personally selected, carefully inspected, and prepared
-                with the kind of attention we’d want for ourselves.
+                with the kind of attention weâ€™d want for ourselves.
                 No pressure. No noise. Just good cars and honest
                 conversations.
             </p>
@@ -1216,7 +1216,7 @@ function Contact(){
 
             <div className="eyebrow">
                 <span/>
-                LET’S TALK CARS
+                LETâ€™S TALK CARS
             </div>
 
             <h1>
@@ -1226,7 +1226,7 @@ function Contact(){
             </h1>
 
             <p>
-                Tell us what you’re looking for, or just come
+                Tell us what youâ€™re looking for, or just come
                 by for a coffee and a conversation.
             </p>
 
@@ -1275,7 +1275,7 @@ function Contact(){
 
                 <div className="success">
                     <Check/>
-                    Thanks — we’ll be in touch shortly.
+                    Thanks â€” weâ€™ll be in touch shortly.
                 </div>
 
                 :
@@ -1320,13 +1320,13 @@ function Contact(){
 
 
                     <label>
-                        What’s on your mind?
+                        Whatâ€™s on your mind?
 
                         <textarea
                             name="message"
                             required
                             rows="4"
-                            placeholder="I’m looking for…"
+                            placeholder="Iâ€™m looking forâ€¦"
                         />
 
                     </label>
@@ -1441,7 +1441,7 @@ function Login(){
             </div>
 
             <span className="login-caption">
-                DEALER PORTAL · PRIVATE ACCESS
+                DEALER PORTAL Â· PRIVATE ACCESS
             </span>
 
         </div>
@@ -1506,7 +1506,7 @@ function Login(){
 
 
             <Link to="/">
-                ← Return to the collection
+                â† Return to the collection
             </Link>
 
         </form>
@@ -1755,7 +1755,7 @@ function Dashboard(){
                 </h1>
 
                 <p>
-                    Here’s what’s happening at Atelier today.
+                    Hereâ€™s whatâ€™s happening at Atelier today.
                 </p>
 
             </div>
@@ -1803,7 +1803,7 @@ function Dashboard(){
                     </div>
 
                     <b>
-                        {v??'—'}
+                        {v??'â€”'}
                     </b>
 
                     <small>
@@ -1962,7 +1962,7 @@ const configs={
             ['location','Location'],
             ['status','Status']
         ],
-        search:'Search vehicles…',
+        search:'Search vehiclesâ€¦',
         columns:['brand','model','year','price','status']
     },
 
@@ -1976,7 +1976,7 @@ const configs={
             ['status','Status'],
             ['notes','Notes']
         ],
-        search:'Search customers…',
+        search:'Search customersâ€¦',
         columns:['name','email','phone','city','status']
     },
 
@@ -1988,7 +1988,7 @@ const configs={
             ['message','Message'],
             ['status','Status']
         ],
-        search:'Search enquiries…',
+        search:'Search enquiriesâ€¦',
         columns:['customerName','email','phone','status']
     },
 
@@ -1999,7 +1999,7 @@ const configs={
             ['password','Password','password'],
             ['role','Role']
         ],
-        search:'Search users…',
+        search:'Search usersâ€¦',
         columns:['name','email','role']
     },
 
@@ -2013,7 +2013,7 @@ const configs={
             ['status','Status'],
             ['notes','Notes']
         ],
-        search:'Search sales…',
+        search:'Search salesâ€¦',
         columns:['customer','car','salePrice','status']
     }
 
@@ -2087,147 +2087,139 @@ function Manage({type,title}){
     }
 
 
-    async function save(e){
+    async function prepareCarData(d, form, edit) {
+        d.year = Number(d.year);
+        d.price = Number(d.price);
+        d.mileage = Number(d.mileage || 0);
 
+        d.features = (d.features || '')
+            .split(',')
+            .map(x => x.trim())
+            .filter(Boolean);
+
+        d.images = edit?.images || [];
+
+        const files = form.querySelector(
+            'input[type=file]'
+        ).files;
+
+        if (!files.length) {
+            return true;
+        }
+
+        const fd = new FormData();
+
+        [...files].forEach(
+            f => fd.append('images', f)
+        );
+
+        try {
+            d.images = [
+                ...d.images,
+                ...(await api.post(
+                    '/upload',
+                    fd,
+                    {
+                        headers: {
+                            'Content-Type':
+                                'multipart/form-data'
+                        }
+                    }
+                )).data.images
+            ];
+
+            return true;
+        } catch (x) {
+            setError(
+                x.response?.data?.message ||
+                'Image upload failed.'
+            );
+
+            return false;
+        }
+    }
+
+
+    function validateSaleData(d) {
+        d.salePrice = Number(d.salePrice);
+
+        if (
+            d.customer &&
+            !d.customer.match(/^[0-9a-f]{24}$/i)
+        ) {
+            return 'Enter a valid customer ID.';
+        }
+
+        if (
+            d.car &&
+            !d.car.match(/^[0-9a-f]{24}$/i)
+        ) {
+            return 'Enter a valid vehicle ID.';
+        }
+
+        return null;
+    }
+
+
+    async function save(e) {
         e.preventDefault();
 
-        const form=e.currentTarget;
+        const form = e.currentTarget;
 
-        const d=Object.fromEntries(
+        const d = Object.fromEntries(
             new FormData(form)
         );
 
+        if (type === 'cars') {
+            const prepared = await prepareCarData(
+                d,
+                form,
+                edit
+            );
 
-        if(type==='cars'){
-
-            d.year=Number(d.year);
-
-            d.price=Number(d.price);
-
-            d.mileage=Number(d.mileage||0);
-
-            d.features=(d.features||'')
-                .split(',')
-                .map(x=>x.trim())
-                .filter(Boolean);
-
-            d.images=edit?.images||[];
-
-
-            const files=form.querySelector(
-                'input[type=file]'
-            ).files;
-
-
-            if(files.length){
-
-                const fd=new FormData();
-
-                [...files].forEach(
-                    f=>fd.append('images',f)
-                );
-
-
-                try{
-
-                    d.images=[
-                        ...d.images,
-                        ...(await api.post(
-                            '/upload',
-                            fd,
-                            {
-                                headers:{
-                                    'Content-Type':
-                                        'multipart/form-data'
-                                }
-                            }
-                        )).data.images
-                    ];
-
-                }catch(x){
-
-                    setError(
-                        x.response?.data?.message||
-                        'Image upload failed.'
-                    );
-
-                    return;
-
-                }
-
+            if (!prepared) {
+                return;
             }
-
         }
 
+        if (type === 'sales') {
+            const validationError = validateSaleData(d);
 
-        if(type==='sales'){
-
-            d.salePrice=Number(d.salePrice);
-
-
-            if(
-                d.customer&&
-                !d.customer.match(/^[0-9a-f]{24}$/i)
-            ){
-
-                setError(
-                    'Enter a valid customer ID.'
-                );
-
+            if (validationError) {
+                setError(validationError);
                 return;
-
             }
-
-
-            if(
-                d.car&&
-                !d.car.match(/^[0-9a-f]{24}$/i)
-            ){
-
-                setError(
-                    'Enter a valid vehicle ID.'
-                );
-
-                return;
-
-            }
-
         }
 
-
-        try{
-
-            if(edit)
+        try {
+            if (edit) {
                 await api.put(
                     `/${type}/${edit._id}`,
                     d
                 );
-            else
+            } else {
                 await api.post(
                     `/${type}`,
                     d
                 );
-
+            }
 
             setModal(false);
 
             setMessage(
                 edit
-                    ?'Changes saved.'
-                    :'Record added.'
+                    ? 'Changes saved.'
+                    : 'Record added.'
             );
 
             load();
 
-        }catch(x){
-
+        } catch (x) {
             setError(
-                x.response?.data?.message||
+                x.response?.data?.message ||
                 'Could not save this record.'
             );
-
         }
-
     }
 
 
@@ -2277,7 +2269,7 @@ function Manage({type,title}){
                 String(v||'').slice(-7);
 
 
-        return v||'—';
+        return v||'â€”';
 
     };
 
@@ -2742,7 +2734,7 @@ function Manage({type,title}){
                                     defaultValue={
                                         edit?.features?.join(', ')||''
                                     }
-                                    placeholder="Leather seats, navigation…"
+                                    placeholder="Leather seats, navigationâ€¦"
                                 />
 
                             </label>
