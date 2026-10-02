@@ -15,7 +15,7 @@ ENV VITE_API_URL=${VITE_API_URL}
 RUN npm run build -w frontend
 
 
-FROM nginxinc/nginx-unprivileged:alpine
+FROM nginxinc/nginx-unprivileged:alpine3.22
 
 USER root
 
