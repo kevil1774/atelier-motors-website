@@ -1,4 +1,4 @@
-﻿import React,{createContext,useContext,useEffect,useState} from 'react';
+import React,{createContext,useContext,useEffect,useState} from 'react';
 import{createRoot}from'react-dom/client';
 import{BrowserRouter,Routes,Route,Link,Navigate,useNavigate,useParams}from'react-router-dom';
 import axios from'axios';
@@ -99,7 +99,7 @@ function App(){
      * Wait until the existing backend session has been checked.
      */
     if(authLoading)
-        return <div className="loading">Loading your sessionâ€¦</div>;
+        return <div className="loading">Loading your sessionÃ¢â‚¬Â¦</div>;
 
 
     return <Auth.Provider value={{user,login,logout}}>
@@ -226,7 +226,7 @@ function PublicLayout(){
             </Link>
 
 
-            <button
+            <button type="button"
                 className="mobile-toggle"
                 onClick={()=>setOpen(!open)}
                 aria-label="Menu"
@@ -332,7 +332,7 @@ function Footer(){
 
 
         <span>
-            Â© 2025 Atelier Motors
+            Ã‚Â© 2025 Atelier Motors
         </span>
 
 
@@ -436,7 +436,7 @@ function Home(){
 
 
             <div className="hero-side">
-                EST. 2012&nbsp; Â· &nbsp;LOS ANGELES
+                EST. 2012&nbsp; Ã‚Â· &nbsp;LOS ANGELES
             </div>
 
         </section>
@@ -539,7 +539,7 @@ function Home(){
                 </h2>
 
                 <p>
-                    We donâ€™t believe in endless listings.
+                    We donÃ¢â‚¬â„¢t believe in endless listings.
                     We believe in the right one. Every car in
                     our collection earns its place, so you can
                     spend less time searching and more time
@@ -666,7 +666,7 @@ function CarCard({car:c}){
             </span>
 
 
-            <button
+            <button type="button"
                 className="heart"
                 onClick={e=>{
                     e.preventDefault();
@@ -691,7 +691,7 @@ function CarCard({car:c}){
                 <p>
                     {c.variant||c.transmission||'Curated selection'}
                     {' '}
-                    <span>Â·</span>
+                    <span>Ã‚Â·</span>
                     {' '}
                     {Number(c.mileage||0).toLocaleString()} mi
                 </p>
@@ -863,7 +863,7 @@ function Inventory(){
         {loading?
 
             <div className="loading">
-                Loading the collectionâ€¦
+                Loading the collectionÃ¢â‚¬Â¦
             </div>
 
             :
@@ -912,7 +912,7 @@ function Details(){
 
     if(!car)
         return <div className="loading">
-            Finding your vehicleâ€¦
+            Finding your vehicleÃ¢â‚¬Â¦
         </div>;
 
 
@@ -922,7 +922,7 @@ function Details(){
             className="back-link"
             to="/cars"
         >
-            â† Back to collection
+            Ã¢â€ Â Back to collection
         </Link>
 
 
@@ -950,7 +950,7 @@ function Details(){
 
                     {(car.images||[]).map((x,i)=>
 
-                        <button
+                        <button type="button"
                             className={selected===i?'selected':''}
                             onClick={()=>setSelected(i)}
                             key={x}
@@ -1160,10 +1160,10 @@ function About(){
             </h2>
 
             <p>
-                Weâ€™re a small team of people who care deeply about
+                WeÃ¢â‚¬â„¢re a small team of people who care deeply about
                 cars and the people who drive them. Each vehicle is
                 personally selected, carefully inspected, and prepared
-                with the kind of attention weâ€™d want for ourselves.
+                with the kind of attention weÃ¢â‚¬â„¢d want for ourselves.
                 No pressure. No noise. Just good cars and honest
                 conversations.
             </p>
@@ -1216,7 +1216,7 @@ function Contact(){
 
             <div className="eyebrow">
                 <span/>
-                LETâ€™S TALK CARS
+                LETÃ¢â‚¬â„¢S TALK CARS
             </div>
 
             <h1>
@@ -1226,7 +1226,7 @@ function Contact(){
             </h1>
 
             <p>
-                Tell us what youâ€™re looking for, or just come
+                Tell us what youÃ¢â‚¬â„¢re looking for, or just come
                 by for a coffee and a conversation.
             </p>
 
@@ -1275,7 +1275,7 @@ function Contact(){
 
                 <div className="success">
                     <Check/>
-                    Thanks â€” weâ€™ll be in touch shortly.
+                    Thanks Ã¢â‚¬â€ weÃ¢â‚¬â„¢ll be in touch shortly.
                 </div>
 
                 :
@@ -1320,13 +1320,13 @@ function Contact(){
 
 
                     <label>
-                        Whatâ€™s on your mind?
+                        WhatÃ¢â‚¬â„¢s on your mind?
 
                         <textarea
                             name="message"
                             required
                             rows="4"
-                            placeholder="Iâ€™m looking forâ€¦"
+                            placeholder="IÃ¢â‚¬â„¢m looking forÃ¢â‚¬Â¦"
                         />
 
                     </label>
@@ -1355,7 +1355,7 @@ function Contact(){
                     }
 
 
-                    <button
+                    <button type="submit"
                         className="button button-dark full"
                     >
                         Send your message
@@ -1441,7 +1441,7 @@ function Login(){
             </div>
 
             <span className="login-caption">
-                DEALER PORTAL Â· PRIVATE ACCESS
+                DEALER PORTAL Ã‚Â· PRIVATE ACCESS
             </span>
 
         </div>
@@ -1497,7 +1497,7 @@ function Login(){
             }
 
 
-            <button
+            <button type="submit"
                 className="button button-dark full"
             >
                 Sign in
@@ -1506,7 +1506,7 @@ function Login(){
 
 
             <Link to="/">
-                â† Return to the collection
+                Ã¢â€ Â Return to the collection
             </Link>
 
         </form>
@@ -1600,7 +1600,7 @@ function AdminLayout(){
                 </div>
 
 
-                <button
+                <button type="button"
                     className="side-link"
                     onClick={logout}
                 >
@@ -1755,7 +1755,7 @@ function Dashboard(){
                 </h1>
 
                 <p>
-                    Hereâ€™s whatâ€™s happening at Atelier today.
+                    HereÃ¢â‚¬â„¢s whatÃ¢â‚¬â„¢s happening at Atelier today.
                 </p>
 
             </div>
@@ -1803,7 +1803,7 @@ function Dashboard(){
                     </div>
 
                     <b>
-                        {v??'â€”'}
+                        {v??'Ã¢â‚¬â€'}
                     </b>
 
                     <small>
@@ -1962,7 +1962,7 @@ const configs={
             ['location','Location'],
             ['status','Status']
         ],
-        search:'Search vehiclesâ€¦',
+        search:'Search vehiclesÃ¢â‚¬Â¦',
         columns:['brand','model','year','price','status']
     },
 
@@ -1976,7 +1976,7 @@ const configs={
             ['status','Status'],
             ['notes','Notes']
         ],
-        search:'Search customersâ€¦',
+        search:'Search customersÃ¢â‚¬Â¦',
         columns:['name','email','phone','city','status']
     },
 
@@ -1988,7 +1988,7 @@ const configs={
             ['message','Message'],
             ['status','Status']
         ],
-        search:'Search enquiriesâ€¦',
+        search:'Search enquiriesÃ¢â‚¬Â¦',
         columns:['customerName','email','phone','status']
     },
 
@@ -1999,7 +1999,7 @@ const configs={
             ['password','Password','password'],
             ['role','Role']
         ],
-        search:'Search usersâ€¦',
+        search:'Search usersÃ¢â‚¬Â¦',
         columns:['name','email','role']
     },
 
@@ -2013,7 +2013,7 @@ const configs={
             ['status','Status'],
             ['notes','Notes']
         ],
-        search:'Search salesâ€¦',
+        search:'Search salesÃ¢â‚¬Â¦',
         columns:['customer','car','salePrice','status']
     }
 
@@ -2269,7 +2269,7 @@ function Manage({type,title}){
                 String(v||'').slice(-7);
 
 
-        return v||'â€”';
+        return v||'Ã¢â‚¬â€';
 
     };
 
@@ -2297,7 +2297,7 @@ function Manage({type,title}){
             </div>
 
 
-            <button
+            <button type="button"
                 className="button button-dark"
                 onClick={()=>open(null)}
             >
@@ -2336,7 +2336,7 @@ function Manage({type,title}){
 
             <div className="view-switch">
 
-                <button
+                <button type="button"
                     className={
                         view==='table'
                             ?'selected'
@@ -2347,7 +2347,7 @@ function Manage({type,title}){
                     Table
                 </button>
 
-                <button
+                <button type="button"
                     className={
                         view==='grid'
                             ?'selected'
@@ -2436,7 +2436,7 @@ function Manage({type,title}){
 
                                 <td>
 
-                                    <button
+                                    <button type="button"
                                         className="icon-button"
                                         onClick={()=>open(item)}
                                         aria-label="Edit"
@@ -2445,7 +2445,7 @@ function Manage({type,title}){
                                     </button>
 
 
-                                    <button
+                                    <button type="button"
                                         className="icon-button danger"
                                         onClick={()=>remove(item)}
                                         aria-label="Delete"
@@ -2484,14 +2484,14 @@ function Manage({type,title}){
 
                         <div className="card-actions">
 
-                            <button
+                            <button type="button"
                                 className="icon-button"
                                 onClick={()=>open(item)}
                             >
                                 <Edit3 size={15}/>
                             </button>
 
-                            <button
+                            <button type="button"
                                 className="icon-button danger"
                                 onClick={()=>remove(item)}
                             >
@@ -2545,10 +2545,21 @@ function Manage({type,title}){
 
             <div
                 className="modal-backdrop"
+                role="button"
+                tabIndex={0}
+                aria-label="Close modal"
                 onClick={e=>
                     e.target===e.currentTarget&&
                     setModal(false)
                 }
+                onKeyDown={e=>{
+                    if(
+                        (e.key==='Enter'||e.key===' ')&&
+                        e.target===e.currentTarget
+                    ){
+                        setModal(false);
+                    }
+                }}
             >
 
                 <form
@@ -2734,7 +2745,7 @@ function Manage({type,title}){
                                     defaultValue={
                                         edit?.features?.join(', ')||''
                                     }
-                                    placeholder="Leather seats, navigationâ€¦"
+                                    placeholder="Leather seats, navigationÃ¢â‚¬Â¦"
                                 />
 
                             </label>
@@ -2784,9 +2795,7 @@ function Manage({type,title}){
                         </button>
 
 
-                        <button className="button button-dark">
-
-                            {edit
+                        <button type="submit" className="button button-dark">                            {edit
                                 ?'Save changes'
                                 :'Create record'
                             }
