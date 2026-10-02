@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import mongoSanitize from 'express-mongo-sanitize';
 import morgan from 'morgan';
+import cookieParser from 'cookie-parser';
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -87,13 +88,26 @@ app.use(
     })
 );
 
+/*
+ * CORS configuration.
+ *
+ * credentials: true allows the browser to send the
+ * HttpOnly authentication cookie to the API.
+ */
 app.use(
     cors({
-        origin: process.env.CLIENT_URL || 'http://localhost:5173'
+        origin: process.env.CLIENT_URL || 'http://localhost:5173',
+        credentials: true
     })
 );
 
 app.use(express.json({ limit: '1mb' }));
+
+/*
+ * Cookie parser is required so that the authentication
+ * middleware can read the HttpOnly JWT cookie.
+ */
+app.use(cookieParser());
 
 app.use(mongoSanitize());
 
