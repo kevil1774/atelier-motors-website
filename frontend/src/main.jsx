@@ -1876,6 +1876,7 @@ function Dashboard(){
                                     <div className="vehicle-cell">
 
                                         <img
+                                            alt={`${c.brand} ${c.model}`}
                                             src={mediaUrl(c.images?.[0])}
                                         />
 
@@ -2717,7 +2718,7 @@ function Manage({type,title}){
 
                             <label className="wide">
 
-                                Description
+                                Description{' '}
 
                                 <textarea
                                     name="description"
@@ -2736,7 +2737,7 @@ function Manage({type,title}){
 
                             <label className="wide">
 
-                                Features
+                                Features{' '}
 
                                 <input
                                     name="features"
