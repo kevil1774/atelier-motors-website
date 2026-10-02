@@ -2755,7 +2755,7 @@ function Manage({type,title}){
 
                             <label className="wide">
 
-                                Vehicle images
+                                Vehicle images{' '}
 
                                 <input
                                     type="file"
