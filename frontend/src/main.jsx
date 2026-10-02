@@ -1463,7 +1463,7 @@ function Login(){
 
 
             <label>
-                Email address
+                Email address{' '}
 
                 <input
                     type="email"
